@@ -1,4 +1,4 @@
-# CHRONOS (Vanilla)
+# CHRONOS (Strawberry-Vanilla)
 
 Home to **ChronosCraft AI**
 

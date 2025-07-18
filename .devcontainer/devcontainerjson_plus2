@@ -1,6 +1,6 @@
 {
   "name": "ChronosCraft v0.1 (Alpha)",
-  
+
   // --- DOCKER COMPOSE INTEGRATION ---
   // Point to your docker-compose.yml file
   // "dockerComposeFile": "../docker-compose.yml",
@@ -13,22 +13,29 @@
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 
   // --- LIFECYCLE HOOKS ---
-  // Automates the creation of the .env file -- a necessary step before an application can be run, as it might contain crucial configuration information -- ensuring the file is present in the environment without needing to create it manually.
-  /**
   "initializeCommand": {
     "env-setup": "touch .env"
   },
-  **/
-  
-  // Wait for the postCreateCommand to complete before allowing connection.
+
+  "onCreateCommand": {
+    "db-setup": "./scripts/devcontainer_db_health_check.sh"
+  },
+
   "waitFor": "onCreateCommand",
 
-  // Install dependencies in all workspaces (shared, client, server).
-  "postCreateCommand": "cd shared && npm install && cd ../client && npm install && cd ../server && npm install && cd ..",
+  "postCreateCommand": {
+    "install-shared": "cd shared && npm install",
+    "install-client": "cd client && npm install",
+    "install-server": "cd server && npm install"
+  },
 
-  // Run client and server development servers concurrently after attaching.
+  "postStartCommand": {
+    "prisma-deploy": "cd server && npx prisma migrate deploy"
+  },
+
   "postAttachCommand": {
-    "client + server": "cd shared && npx concurrently 'cd ../client && npm run dev' 'cd ../server && npm run dev'"
+    "client": "cd client && npm run dev",
+    "server": "cd server && npm run dev"
   },
 
   // --- VS CODE CUSTOMIZATIONS ---
