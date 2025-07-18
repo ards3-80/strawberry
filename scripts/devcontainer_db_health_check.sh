@@ -1,16 +1,37 @@
-#!/bin/zsh
+#!/bin/bash
 # devcontainer_db_health_check.sh
 # Health check for devcontainer PostgreSQL setup
 
+
 set -e
 
+# Always run from the repo root so relative paths work
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$SCRIPT_DIR/.."
+cd "$REPO_ROOT"
+
+# Source environment variables from .env file if present
+if [ -f .env ]; then
+  set -a
+  . ./.env
+  set +a
+else
+  echo "\n❌ ERROR: .env file not found in repository root."
+  echo "Please ensure a .env file exists and contains POSTGRES_USER, POSTGRES_PASSWORD, and POSTGRES_DB."
+  exit 2
+fi
+
 # Check required environment variables
-if [[ -z "$POSTGRES_USER" || -z "$POSTGRES_PASSWORD" || -z "$POSTGRES_DB" ]]; then
-  echo "\n❌ ERROR: One or more required environment variables are not set."
+if [ -z "$POSTGRES_USER" ] || [ -z "$POSTGRES_PASSWORD" ] || [ -z "$POSTGRES_DB" ]; then
+  echo "\n❌ ERROR: One or more required environment variables are not set after sourcing .env."
   echo "POSTGRES_USER: ${POSTGRES_USER:-<unset>}"
-  echo "POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:+<set>}"
+  if [ -z "$POSTGRES_PASSWORD" ]; then
+    echo "POSTGRES_PASSWORD: <unset>"
+  else
+    echo "POSTGRES_PASSWORD: <set>"
+  fi
   echo "POSTGRES_DB: ${POSTGRES_DB:-<unset>}"
-  echo "\nPlease export these variables in your shell before running this script."
+  echo "\nPlease ensure your .env file contains these variables."
   exit 2
 fi
 
@@ -28,7 +49,7 @@ docker compose -f .devcontainer/docker-compose.yml up -d --force-recreate
 
 echo "[2/3] Waiting for database to be ready..."
 # Wait for the db to be ready (max 30s)
-for i in {1..15}; do
+for i in $(seq 1 15); do
   if docker compose -f .devcontainer/docker-compose.yml exec db pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" > /dev/null 2>&1; then
     echo "Database is ready!"
     break
@@ -36,7 +57,7 @@ for i in {1..15}; do
     echo "  ...waiting ($i)"
     sleep 2
   fi
-  if [[ $i -eq 15 ]]; then
+  if [ $i -eq 15 ]; then
     echo "Database did not become ready in time."
     exit 1
   fi

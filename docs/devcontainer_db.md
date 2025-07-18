@@ -8,11 +8,13 @@ The health check script ensures that the PostgreSQL database is properly configu
 
 ## Prerequisites
 
-The following environment variables must be set:
+The following environment variables must be available to the database container, typically via a `.env` file:
 
 - `POSTGRES_USER`: Database user
 - `POSTGRES_PASSWORD`: Database password
 - `POSTGRES_DB`: Target database name
+
+> **Note:** In most setups, the `.env` file is automatically generated or populated by GitHub secrets (in CI/CD) or Codespaces secrets. Manual setting is usually not required unless running locally outside these environments.
 
 ## Process Stages
 
@@ -123,3 +125,16 @@ The script should be run from the repository root:
 ```
 
 This is typically executed during development container setup or when verifying database connectivity issues.
+
+## Actionables
+
+The following actionable items correspond to the upgrades and improvements outlined above. Check off each item as it is implemented:
+
+- [ ] Migrate script from zsh to bash for compatibility
+- [ ] Source environment variables from `.env` file (Docker Compose approach)
+- [ ] Check container state before operations (avoid forced recreation)
+- [ ] Use devcontainer.json for path resolution (support flexible docker-compose.yml locations)
+- [ ] Use devcontainer's workspaceFolder for workspace integration
+- [ ] Support devcontainer naming conventions for containers
+- [ ] Use Docker's built-in health checks for database readiness
+- [ ] Integrate script with devcontainer lifecycle hooks for automation
