@@ -55,6 +55,16 @@ The following environment variables must be available to the database container,
 
 ## Upgrades
 
+### Priority: Environment Setup Migration
+
+**IMPORTANT:** Move environment variable setup (.env creation) from health check script to devcontainer lifecycle hooks:
+
+- **Why**: Environment setup is an initialization concern, not a health check concern
+- **Impact**: Improved reliability, cleaner separation of concerns
+- **Implementation**: Use devcontainer postCreateCommand or initializeCommand to create .env
+- **Benefit**: Health check script remains focused on its core purpose
+- **Status**: High priority, blocks other improvements
+
 ### Shell Migration (zsh to bash)
 
 The script is being migrated from zsh to bash for wider compatibility and standardization:
