@@ -57,11 +57,11 @@ The following environment variables must be available to the database container,
 
 ### Priority: Environment Setup Migration
 
-**IMPORTANT:** Move environment variable setup (.env creation) from health check script to devcontainer lifecycle hooks:
+**IMPORTANT:** Environment variable setup (.env creation) is only required for local/manual development. In standard Codespaces or CI/CD workflows, environment variables are injected via GitHub secrets and `.env` is not needed. After the db health script is successfully upgraded to rely solely on injected secrets, remove any `.env` creation logic from devcontainer lifecycle hooks and scripts.
 
 - **Why**: Environment setup is an initialization concern, not a health check concern
 - **Impact**: Improved reliability, cleaner separation of concerns
-- **Implementation**: Use devcontainer postCreateCommand or initializeCommand to create .env
+- **Implementation**: Use devcontainer postCreateCommand or initializeCommand to create .env only for local/manual setups. For Codespaces/GitHub secrets, rely on injected environment variables.
 - **Benefit**: Health check script remains focused on its core purpose
 - **Status**: High priority, blocks other improvements
 
@@ -140,11 +140,11 @@ This is typically executed during development container setup or when verifying 
 
 The following actionable items correspond to the upgrades and improvements outlined above. Check off each item as it is implemented:
 
-- [ ] Migrate script from zsh to bash for compatibility
-- [ ] Source environment variables from `.env` file (Docker Compose approach)
+- [x] Migrate script from zsh to bash for compatibility
+- [x] Source environment variables from `.env` file (Docker Compose approach)
 - [ ] Check container state before operations (avoid forced recreation)
-- [ ] Use devcontainer.json for path resolution (support flexible docker-compose.yml locations)
-- [ ] Use devcontainer's workspaceFolder for workspace integration
+- [x] Use devcontainer.json for path resolution (support flexible docker-compose.yml locations)
+- [x] Use devcontainer's workspaceFolder for workspace integration
 - [ ] Support devcontainer naming conventions for containers
 - [ ] Use Docker's built-in health checks for database readiness
 - [ ] Integrate script with devcontainer lifecycle hooks for automation
