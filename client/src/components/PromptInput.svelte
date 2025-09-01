@@ -12,6 +12,15 @@
     uiState = value;
   });
 
+  // Quick-insert suggestions for the 'summer' theme
+  const insertSummerSuggestion = () => {
+    const suggestion = `A short, sunlit summer poem about cicadas and long shadows.`;
+    promptStore.set(suggestion);
+    // Focus textarea after inserting so keyboard users can immediately edit
+    const el = document.getElementById('prompt-textarea');
+    if (el) el.focus();
+  };
+
   const handleSubmit = async () => {
     if (!currentPrompt || !currentPrompt.trim()) {
       uiStateStore.set({ status: 'error', message: 'Prompt cannot be empty.' });
@@ -52,7 +61,7 @@
   };
 </script>
 
-<div class="prompt-container">
+  <div class="prompt-container">
   <label for="prompt-textarea">Prompt</label>
   <textarea
     id="prompt-textarea"
@@ -62,7 +71,18 @@
     placeholder="e.g., A noir detective story set in a city of robots."
     disabled={uiState.status === 'loading'}
   ></textarea>
-  <button data-testid="generate-button" on:click={handleSubmit} disabled={uiState.status === 'loading'}>
+  <div class="controls-row">
+    <button
+      class="suggestion"
+      on:click={insertSummerSuggestion}
+      title="Insert summer prompt suggestion"
+      aria-label="Insert a summer prompt suggestion"
+      data-testid="summer-suggestion"
+      disabled={uiState.status === 'loading'}
+    >
+      Summer suggestion
+    </button>
+    <button data-testid="generate-button" on:click={handleSubmit} disabled={uiState.status === 'loading'}>
     {#if uiState.status === 'loading'}
       Generating...
     {:else}
@@ -72,6 +92,7 @@
   <button data-testid="preview-button" on:click={handlePreviewNow} disabled={uiState.status === 'loading'}>
     Preview
   </button>
+  </div>
   
   {#if uiState.status === 'error'}
     <p class="error-message">{uiState.message}</p>
@@ -85,6 +106,8 @@
     gap: 0.75rem;
     text-align: left;
   }
+  .controls-row { display:flex; gap:0.5rem; align-items:center }
+  .suggestion { background: #f6e58d; color: #2d3436; padding: 0.5rem; border-radius:4px; border:none }
   label {
     font-weight: bold;
   }

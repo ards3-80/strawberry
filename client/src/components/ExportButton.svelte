@@ -15,6 +15,7 @@
   // Local progress for export (0-100)
   let progress = 0;
   let progressInterval = null;
+  let lastError: string | null = null;
 
   const handleExport = async () => {
     if (!content) {
@@ -32,14 +33,16 @@
       progress = Math.min(99, Math.round(progress));
     }, 400);
 
-    try {
+  try {
       // Kick off the real export; this returns when download begins
       await exportToPdf(content);
       // On success, finish progress and clear interval
       progress = 100;
+      lastError = null;
       uiStateStore.set({ status: 'success', message: 'PDF exported successfully.' });
     } catch (error) {
       const err = error as Error;
+      lastError = err.message || 'Unknown error';
       uiStateStore.set({ status: 'error', message: `Export failed: ${err.message}` });
     } finally {
       if (progressInterval) {
@@ -47,20 +50,38 @@
         progressInterval = null;
       }
       // reset progress after small delay so UI shows 100 briefly
-      setTimeout(() => (progress = 0), 800);
+      setTimeout(() => {
+        progress = 0;
+      }, 800);
     }
+  };
+
+  const handleRetry = () => {
+    // Clear last error and trigger export again
+    lastError = null;
+    handleExport();
   };
 </script>
 
 {#if content}
   <div class="export-container">
-    <button on:click={handleExport} disabled={uiState.status === 'loading'}>
-      {#if uiState.status === 'loading'}
-        Exporting... {progress}%
-      {:else}
-        Export to PDF
+    <div class="actions-row">
+      <button
+        on:click={handleExport}
+        disabled={uiState.status === 'loading'}
+        aria-disabled={uiState.status === 'loading'}
+        data-testid="export-button"
+      >
+        {#if uiState.status === 'loading'}
+          Exporting... {progress}%
+        {:else}
+          Export to PDF
+        {/if}
+      </button>
+      {#if uiState.status === 'error' && lastError}
+        <button class="retry" on:click={handleRetry} data-testid="retry-button">Retry</button>
       {/if}
-    </button>
+    </div>
     {#if uiState.status === 'loading'}
       <div class="progress-bar"><div class="progress" style="width: {progress}%"></div></div>
     {/if}
