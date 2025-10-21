@@ -114,10 +114,48 @@ const genieService = {
               typeof _injectedDbUtils !== "undefined"
                 ? _injectedDbUtils
                 : require("./utils/dbUtils");
-
-            // Create prompt record
+            // Create prompt record with dedupe-on-create handling.
             try {
-              const p = await dbUtils.createPrompt(String(prompt));
+              let p;
+              try {
+                p = await dbUtils.createPrompt(String(prompt));
+              } catch (createErr) {
+                // If create failed due to a uniqueness/constraint error,
+                // attempt to recover by searching for an existing prompt
+                // that matches the normalized text. This avoids throwing
+                // when concurrent requests race to create the same prompt.
+                // Normalize and search recent prompts for a match.
+                try {
+                  const norm = normalizePrompt(prompt);
+                  const recent = await dbUtils.getPrompts(200);
+                  const found = (recent || []).find((r) => {
+                    try {
+                      return (
+                        typeof r.prompt === "string" &&
+                        normalizePrompt(r.prompt) === norm
+                      );
+                    } catch (e) {
+                      return false;
+                    }
+                  });
+                  if (found && found.id) {
+                    p = { id: found.id };
+                  } else {
+                    // Re-throw original create error if we couldn't recover
+                    throw createErr;
+                  }
+                } catch (recoverErr) {
+                  // Log recovery failure and rethrow original create error
+                  // eslint-disable-next-line no-console
+                  console.warn(
+                    "genieService: createPrompt failed and recovery failed",
+                    createErr && createErr.message,
+                    recoverErr && recoverErr.message
+                  );
+                  throw createErr;
+                }
+              }
+
               if (p && p.id) out.data.promptId = p.id;
 
               // Create AI result record linked to the prompt
